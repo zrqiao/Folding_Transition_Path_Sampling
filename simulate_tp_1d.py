@@ -21,12 +21,12 @@ def rate_matrix_1d(F, rate_fcn, x_F_min, x_F_max):
     return rates, states
 
 def committors(rates, source=[0], sink=[-1], reverse=False):
-    if 0 not in source or len(source) != max(source) + 1 or -1 not in sink or len(sink) != -min(sink):
+    if 0 not in source or len(source) != max(source) + 1 or -1 not in sink or len(sink) != -min(sink):#Format
         raise Exception("invalid order of source and sink states")
     N = rates.shape[0]
-    q = np.zeros(N)
+    q = np.zeros(N)#States number
     if not reverse:
-        b = np.array([-sum(rates[i,j] for j in sink) for i in range(len(source),N-len(sink))])
+        b = np.array([-sum(rates[i,j] for j in sink) for i in range(len(source),N-len(sink))])#Check
         for j in sink:
             q[j] = 1.
     else:
@@ -57,12 +57,13 @@ def sample_transition_paths_1d(rates, npaths, stream, save_time_only=False):
     ntps = 0
     while True:
         if i == 0 or i == N - 1:
-            if tp[0][0] != i:
+            if tp[0][0] != i:# This path is a transition path
                 if not save_time_only:
                     pickle.dump(tp, stream)
                 else:
                     pickle.dump((len(tp), sum(t[1] for t in tp)), stream)
                 ntps += 1
+                if ntps%10==0:print('step: %d \n'%(ntps))
                 if ntps >= npaths:
                     break
             tp = [(i, 0.)]
@@ -210,10 +211,10 @@ if __name__ == '__main__':
         for i in range(len(q)):
             f.write("%g %g %g %g\n" % (states[i], q[i], m[i] / sum(m), 2. * m[i] / pi[i]))
 
-    # npaths = 10000
-    # print("Sampling %d transition paths and writing to %s..." % (npaths, clargs.stored_paths))
-    # with gzip.open(clargs.stored_paths, 'wb') as f:
-    #     sample_transition_paths_1d(T, npaths, f, save_time_only=clargs.time_only)
+    npaths = 10000
+    print("Sampling %d transition paths and writing to %s..." % (npaths, clargs.stored_paths))
+    with gzip.open(clargs.stored_paths, 'wb') as f:
+        sample_transition_paths_1d(T, npaths, f, save_time_only=clargs.time_only)
 
     # print("Writing simulated_tp_length_distribution.dat")
     # with gzip.open(clargs.stored_paths, 'rb') as f_tps, \
