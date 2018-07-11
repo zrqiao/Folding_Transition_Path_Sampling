@@ -1,4 +1,4 @@
-import argparse, math, random, gzip, pickle
+import argparse, math, random, gzip, pickle, types
 import numpy as np
 from collections import defaultdict
 
@@ -98,8 +98,9 @@ def transition_path_time_distribution(stream, nbins=10):
     while True:
         try:
             tp = pickle.load(stream)
-            if tp is list:
+            if isinstance(tp,list):
                 times.append(sum(t[1] for t in tp))
+                #print(times[-1])
             else:
                 times.append(tp[1]) # Time information only
         except (IOError, EOFError):
@@ -113,7 +114,7 @@ def transition_path_time_distribution(stream, nbins=10):
     # stddevtime = np.std(times)
     # times = [t / stddevtime for t in times]
     mint = 0. # min(times)
-    maxt = 32. # max(times) + 1
+    maxt = 4. # max(times) + 1 change!
     print("time stddev / mean:", np.std(times), bootstrap_fcn_err(np.std, times))
     dt = (maxt - mint) / nbins
     hist = np.zeros(nbins)
@@ -127,7 +128,7 @@ def transition_path_time_cdf(streamin, streamout):
     while True:
         try:
             tp = pickle.load(streamin)
-            if tp is list:
+            if isinstance(tp,list):
                 times.append(sum(t[1] for t in tp))
             else:
                 times.append(tp[1]) # Time information only
@@ -164,7 +165,7 @@ def jump_size_distribution(stream, dts, ddt=1, step_size=1):
         for dt in dts:
             drift = (tp[-1][0] - tp[0][0]) / (cumulative_time / dt)
             for t in range(int(dt / ddt), len(x_t)):
-                dx = (x_t[t] - x_t[t - int(dt / ddt)]) + drift
+                dx = (x_t[t] - x_t[t - int(dt / ddt)]) - drift #Should be - drift?
                 msd[dt] += dx**2
                 if dx > 0:
                     steps[dt][int(dx / step_size + 0.5)] += 1
@@ -212,9 +213,9 @@ if __name__ == '__main__':
             f.write("%g %g %g %g\n" % (states[i], q[i], m[i] / sum(m), 2. * m[i] / pi[i]))
 
     npaths = 10000
-    print("Sampling %d transition paths and writing to %s..." % (npaths, clargs.stored_paths))
-    with gzip.open(clargs.stored_paths, 'wb') as f:
-        sample_transition_paths_1d(T, npaths, f, save_time_only=clargs.time_only)
+    # print("Sampling %d transition paths and writing to %s..." % (npaths, clargs.stored_paths))
+    # with gzip.open(clargs.stored_paths, 'wb') as f:
+    #     sample_transition_paths_1d(T, npaths, f, save_time_only=clargs.time_only)
 
     # print("Writing simulated_tp_length_distribution.dat")
     # with gzip.open(clargs.stored_paths, 'rb') as f_tps, \
@@ -224,23 +225,23 @@ if __name__ == '__main__':
     print("Writing simulated_tp_time_distribution.dat")
     with gzip.open(clargs.stored_paths, 'rb') as f_tps, \
          open('simulated_tp_time_distribution.dat', 'w') as f:
-        for t,p in transition_path_time_distribution(f_tps, nbins=400).items():
+        for t,p in transition_path_time_distribution(f_tps, nbins=100).items():
             f.write("%g %g %g\n" % (t, p[0], p[1]))
     print("Writing simulated_tp_time_cdf.dat")
     with gzip.open(clargs.stored_paths, 'rb') as f_tps, \
          open('simulated_tp_time_cdf.dat', 'w') as f:
         transition_path_time_cdf(f_tps, f)
 
-    # step_size = 1
-    # with gzip.open(clargs.stored_paths, 'rb') as f_tps:
-    #     msd, steps = jump_size_distribution(f_tps, [2.**p for p in range(8)], step_size=step_size)
-    # print("Writing simulated_tp_msd.dat")
-    # with open('simulated_tp_msd.dat', 'w') as f:
-    #     for dt in msd:
-    #         f.write("%g %g\n" % (dt, msd[dt]))
-    # print("Writing simulated_tp_step_size_distribution.dat")
-    # with open('simulated_tp_step_size_distribution.dat', 'w') as f:
-    #     for dt in steps:
-    #         for i in range(min(steps[dt]), max(steps[dt]) + 1):
-    #             f.write("%g %g %g\n" % (math.log(dt) / math.log(2), i * step_size, steps[dt][i]))
-    #         f.write("\n")
+    step_size = 1
+    with gzip.open(clargs.stored_paths, 'rb') as f_tps:
+        msd, steps = jump_size_distribution(f_tps, [2.**p for p in range(8)], step_size=step_size)
+    print("Writing simulated_tp_msd.dat")
+    with open('simulated_tp_msd.dat', 'w') as f:
+        for dt in msd:
+            f.write("%g %g\n" % (dt, msd[dt]))
+    print("Writing simulated_tp_step_size_distribution.dat")
+    with open('simulated_tp_step_size_distribution.dat', 'w') as f:
+        for dt in steps:
+            for i in range(min(steps[dt]), max(steps[dt]) + 1):
+                f.write("%g %g %g\n" % (math.log(dt) / math.log(2), i * step_size, steps[dt][i]))
+            f.write("\n")
