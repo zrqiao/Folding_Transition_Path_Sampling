@@ -114,7 +114,7 @@ def transition_path_time_distribution(stream, nbins=10):
     # stddevtime = np.std(times)
     # times = [t / stddevtime for t in times]
     mint = 0. # min(times)
-    maxt = 4. # max(times) + 1 change!
+    maxt = 32. # max(times) + 1 change!
     print("time stddev / mean:", np.std(times), bootstrap_fcn_err(np.std, times))
     dt = (maxt - mint) / nbins
     hist = np.zeros(nbins)
@@ -213,9 +213,9 @@ if __name__ == '__main__':
             f.write("%g %g %g %g\n" % (states[i], q[i], m[i] / sum(m), 2. * m[i] / pi[i]))
 
     npaths = 10000
-    # print("Sampling %d transition paths and writing to %s..." % (npaths, clargs.stored_paths))
-    # with gzip.open(clargs.stored_paths, 'wb') as f:
-    #     sample_transition_paths_1d(T, npaths, f, save_time_only=clargs.time_only)
+    print("Sampling %d transition paths and writing to %s..." % (npaths, clargs.stored_paths))
+    with gzip.open(clargs.stored_paths, 'wb') as f:
+        sample_transition_paths_1d(T, npaths, f, save_time_only=clargs.time_only)
 
     # print("Writing simulated_tp_length_distribution.dat")
     # with gzip.open(clargs.stored_paths, 'rb') as f_tps, \
@@ -225,12 +225,12 @@ if __name__ == '__main__':
     print("Writing simulated_tp_time_distribution.dat")
     with gzip.open(clargs.stored_paths, 'rb') as f_tps, \
          open('simulated_tp_time_distribution.dat', 'w') as f:
-        for t,p in transition_path_time_distribution(f_tps, nbins=100).items():
+        for t,p in transition_path_time_distribution(f_tps, nbins=400).items():
             f.write("%g %g %g\n" % (t, p[0], p[1]))
     print("Writing simulated_tp_time_cdf.dat")
     with gzip.open(clargs.stored_paths, 'rb') as f_tps, \
          open('simulated_tp_time_cdf.dat', 'w') as f:
-        transition_path_time_cdf(f_tps, f)
+         transition_path_time_cdf(f_tps, f)
 
     step_size = 1
     with gzip.open(clargs.stored_paths, 'rb') as f_tps:
