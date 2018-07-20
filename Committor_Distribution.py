@@ -92,6 +92,46 @@ def processing(path,ax):
        np.savetxt(f,p_q)
     ax.plot(state_xs, tp_x, label=path, ls='solid')
 
+def processing_1(path,ax):
+
+    with open(path+'/PES_l.dat', 'r') as f:
+        F = {float(line.split()[0]) : float(line.split()[1]) for line in f \
+             if len(line) > 1 and line[0] != '#'}
+    x_F_mid = (min(F) + max(F)) / 2
+    x_F_min = min((z for z in F.items() if z[0] < x_F_mid), key=lambda z: (z[1], z[0]))[0]
+    x_F_max = min((z for z in F.items() if z[0] > x_F_mid), key=lambda z: (z[1], -z[0]))[0]
+    x_F_barrier = max((z for z in F.items() if z[0] > x_F_min and z[0] < x_F_max), \
+                      key=lambda z: z[1])[0]
+
+    state_xs=np.array(list(F.keys()))
+    state_Fs=np.array(list(F.values()))
+    ref=np.zeros(len(state_Fs))
+    #PDF=gibbs(ref,state_Fs)#Probability Distribution Function
+    #Z=np.sum(PDF)#Partition Function
+    #PDF=PDF/Z
+
+    T, states = rate_matrix_1d(F, rate_symm, x_F_min, x_F_max)
+    print("nstates =", len(states))
+    pi = stationary(np.transpose(T))
+    q = committors(T, [0], [-1])
+    m = pi * q * (1. - q)
+    #kreaction = reaction_rate(pi, T, [i for i in range (460)], [-i for i in range (1,461)])
+    #print("log(reaction rate) =", math.log(kreaction))
+
+    PDF=m/np.sum(m)*len(m) #q distribution by x
+    tp_x=2. * m / pi
+    dq=0.025
+
+    p_q = np.zeros(int(1/dq)+1)
+    q_coor=np.arange(0.,1.+dq,dq)
+
+    for i in range(1,len(q)-1):
+        p_q[int(np.round(q[i] / dq))] +=PDF[i]*dq
+
+    with open('q_distribution_'+path+'dat', 'w') as f:
+       np.savetxt(f,q)
+    ax.plot(state_xs, q, label=path, ls='solid')
+
 if __name__ == '__main__':
 
 
@@ -114,25 +154,51 @@ if __name__ == '__main__':
     fig.add_axes()
 
     ax = fig.add_subplot(111)
-    ax.set_xlabel('q', fontsize=12.5)
-    ax.set_ylabel('p(q)', fontsize=12.5)
+    ax.set_xlabel('discrete states', fontsize=12.5)
+    ax.set_ylabel(r'$p(TP|x_{state})$', fontsize=12.5)
     ax.set_yscale('linear')
     #ax.set_ylim(5e-3, 2)
 
 
 
     processing('Harmonic',ax)
+    #processing('Harmonic_flat',ax)
     processing('Periodic',ax)
     processing('2Barriers',ax)
     processing('3Barriers',ax)
     processing('4Barriers',ax)
     processing('5Barriers',ax)
+    #processing('Highfreq',ax)
 
     #ax.plot(state_xs,PDF1,state_xs,PDF2)
     #ax.plot(state_xs,q1,state_xs,q2)
     ax.legend(loc='best', fontsize='x-large')
     plt.show()
     fig.savefig('TP_Distribution.png')
+
+    fig1 = plt.figure(figsize=(8, 5))
+    fig1.add_axes()
+
+    ax1 = fig1.add_subplot(111)
+    ax1.set_xlabel('discrete states', fontsize=12.5)
+    ax1.set_ylabel(r'$q$', fontsize=12.5)
+    ax1.set_yscale('linear')
+    #ax.set_ylim(5e-3, 2)
+
+    processing_1('Harmonic',ax1)
+    processing_1('Harmonic_flat',ax1)
+    #processing_1('Periodic',ax1)
+    #processing_1('2Barriers',ax1)
+    #processing_1('3Barriers',ax1)
+    #processing_1('4Barriers',ax1)
+    #processing_1('5Barriers',ax1)
+    processing_1('Highfreq',ax1)
+
+    #ax.plot(state_xs,PDF1,state_xs,PDF2)
+    #ax.plot(state_xs,q1,state_xs,q2)
+    ax1.legend(loc='best', fontsize='x-large')
+    plt.show()
+    fig.savefig('q_Distribution.png')
 
 
 '''

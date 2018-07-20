@@ -42,8 +42,8 @@ if __name__ == '__main__':
     ax.set_xlabel(r'$\Delta x/ \sqrt{\langle \Delta x (\Delta t)^2 \rangle}$',fontsize=12.5)
     ax.set_ylabel(r'$p(\Delta x| \Delta t)$',fontsize=12.5)
     ax.set_yscale('log')
-    ax.set_ylim(1e-5,1)
-    ax.set_xlim(-7,7)
+    ax.set_ylim(1e-6,1)
+    ax.set_xlim(-10,10)
     for lt in range(1,8):
         ax.plot(disp[lt].keys(), disp[lt].values(),marker='o', ls='solid',label=r'$log_2(k_0 \Delta t)=%g$'% lt)
         print()
@@ -56,8 +56,8 @@ if __name__ == '__main__':
     ax.set_xlabel(r'$\Delta x/ \sqrt{\langle \Delta x (\Delta t)^2 \rangle}$',fontsize=12.5)
     ax.set_ylabel(r'$p(\Delta x| \Delta t)$',fontsize=12.5)
     ax.set_yscale('log')
-    ax.set_ylim(1e-5,1)
-    ax.set_xlim(-7,7)
+    ax.set_ylim(1e-6,1)
+    ax.set_xlim(-10,10)
     for lt in range(1,8):
         ax.plot(disp[lt].keys(), disp[lt].values(),marker='o', ls='solid',label=r'$log_2(k_0 \Delta t)=%g$'% lt)
     ax.legend(loc='best',fontsize='x-large')
@@ -69,8 +69,8 @@ if __name__ == '__main__':
     ax.set_xlabel(r'$\Delta x/ \sqrt{\langle \Delta x (\Delta t)^2 \rangle}$',fontsize=12.5)
     ax.set_ylabel(r'$p(\Delta x| \Delta t)$',fontsize=12.5)
     ax.set_yscale('log')
-    ax.set_ylim(1e-5,1)
-    ax.set_xlim(-7,7)
+    ax.set_ylim(1e-6,1)
+    ax.set_xlim(-10,10)
     for lt in range(1,8):
         ax.plot(disp[lt].keys(), disp[lt].values(),marker='o', ls='solid',label=r'$log_2(k_0 \Delta t)=%g$'% lt)
     ax.legend(loc='best',fontsize='x-large')
@@ -82,8 +82,8 @@ if __name__ == '__main__':
     ax.set_xlabel(r'$\Delta x/ \sqrt{\langle \Delta x (\Delta t)^2 \rangle}$',fontsize=12.5)
     ax.set_ylabel(r'$p(\Delta x| \Delta t)$',fontsize=12.5)
     ax.set_yscale('log')
-    ax.set_ylim(1e-5,1)
-    ax.set_xlim(-7,7)
+    ax.set_ylim(1e-6,1)
+    ax.set_xlim(-10,10)
     for lt in range(1,8):
         ax.plot(disp[lt].keys(), disp[lt].values(),marker='o', ls='solid',label=r'$log_2(k_0 \Delta t)=%g$'% lt)
     ax.legend(loc='best',fontsize='x-large')
@@ -95,8 +95,21 @@ if __name__ == '__main__':
     ax.set_xlabel(r'$\Delta x/ \sqrt{\langle \Delta x (\Delta t)^2 \rangle}$',fontsize=12.5)
     ax.set_ylabel(r'$p(\Delta x| \Delta t)$',fontsize=12.5)
     ax.set_yscale('log')
-    ax.set_ylim(1e-5,1)
-    ax.set_xlim(-7,7)
+    ax.set_ylim(1e-6,1)
+    ax.set_xlim(-10,10)
+    for lt in range(1,8):
+        ax.plot(disp[lt].keys(), disp[lt].values(),marker='o', ls='solid',label=r'$log_2(k_0 \Delta t)=%g$'% lt)
+    ax.legend(loc='best',fontsize='x-large')
+
+    path = 'Periodic/'
+    disp=processing(path)
+    ax = fig.add_subplot(326)
+    ax.set_title('Periodic')
+    ax.set_xlabel(r'$\Delta x/ \sqrt{\langle \Delta x (\Delta t)^2 \rangle}$',fontsize=12.5)
+    ax.set_ylabel(r'$p(\Delta x| \Delta t)$',fontsize=12.5)
+    ax.set_yscale('log')
+    ax.set_ylim(1e-6,1)
+    ax.set_xlim(-10,10)
     for lt in range(1,8):
         ax.plot(disp[lt].keys(), disp[lt].values(),marker='o', ls='solid',label=r'$log_2(k_0 \Delta t)=%g$'% lt)
     ax.legend(loc='best',fontsize='x-large')

@@ -1,5 +1,8 @@
 import argparse, math, random, gzip, pickle, types
 import numpy as np
+from functools import partial
+import multiprocessing
+
 from collections import defaultdict
 
 def rate_symm(fi, fj):
@@ -50,7 +53,7 @@ def reaction_rate(pi, T, source, sink):
             for i in range(len(pi)) if i in source)
     return k
 
-def sample_transition_paths_1d(rates, npaths, stream, save_time_only=False):
+def sample_transition_paths_1d(rates, id, save_time_only=False):
     N = rates.shape[0]
     i = 0
     tp = [(i, 0.)]
@@ -58,12 +61,15 @@ def sample_transition_paths_1d(rates, npaths, stream, save_time_only=False):
     while True:
         if i == 0 or i == N - 1:
             if tp[0][0] != i:# This path is a transition path
+                if id % 1 == 0: print('step: %d \n' % (id))
                 if not save_time_only:
-                    pickle.dump(tp, stream)
+                    #pickle.dump(tp, stream)
+                    return tp
                 else:
-                    pickle.dump((len(tp), sum(t[1] for t in tp)), stream)
+                    #pickle.dump((len(tp), sum(t[1] for t in tp)), stream)
+                    return (len(tp), sum(t[1] for t in tp))
                 ntps += 1
-                if ntps%10==0:print('step: %d \n'%(ntps))
+
                 if ntps >= npaths:
                     break
             tp = [(i, 0.)]
@@ -75,15 +81,14 @@ def sample_transition_paths_1d(rates, npaths, stream, save_time_only=False):
             cumulative_rate = rates[i,j]
         else:
             cumulative_rate = rates[i,i-1] + rates[i,i+1]
-            r = cumulative_rate * random.random()
+            r = cumulative_rate * np.random.random()
             if r < rates[i,i-1]:
                 j = i - 1
             else:
                 j = i + 1
         i = j
-        dt = math.log(1 / random.random()) / cumulative_rate
+        dt = np.log(1 / random.random()) / cumulative_rate
         tp.append((i, dt))
-
 # def transition_path_length_distribution(stream, nbins=10):
 #     minL = min(len(tp) for tp in tps)
 #     maxL = max(len(tp) for tp in tps) + 1
@@ -120,8 +125,7 @@ def transition_path_time_distribution(stream, nbins=10):
     hist = np.zeros(nbins)
     for i in range(len(times)):
         hist[int((times[i] - mint) / dt)] += 1
-    return {mint + dt * (i + 0.5) : (hist[i] / (dt * np.sum(hist)), \
-                                     math.sqrt(hist[i]) / (dt * np.sum(hist))) for i in range(nbins)}
+    return {mint + dt * (i + 0.5) : (hist[i] / (dt * np.sum(hist)), np.sqrt(hist[i]) / (dt * np.sum(hist))) for i in range(nbins)}
 
 def transition_path_time_cdf(streamin, streamout):
     times = []
@@ -188,7 +192,7 @@ if __name__ == '__main__':
     clargs = parser.parse_args()
 
     with open(clargs.landscape, 'r') as f:
-        F = {float(line.split()[0]) : float(line.split()[1]) for line in f \
+        F = {np.float(line.split()[0]) : np.float(line.split()[1]) for line in f \
              if len(line) > 1 and line[0] != '#'}
     x_F_mid = (min(F) + max(F)) / 2
     x_F_min = min((z for z in F.items() if z[0] < x_F_mid), key=lambda z: (z[1], z[0]))[0]
@@ -213,9 +217,21 @@ if __name__ == '__main__':
             f.write("%g %g %g %g\n" % (states[i], q[i], m[i] / sum(m), 2. * m[i] / pi[i]))
 
     npaths = 50000
+
     print("Sampling %d transition paths and writing to %s..." % (npaths, clargs.stored_paths))
     with gzip.open(clargs.stored_paths, 'wb') as f:
-        sample_transition_paths_1d(T, npaths, f, save_time_only=clargs.time_only)
+        print('cores='+str(multiprocessing.cpu_count()))
+        task=partial(sample_transition_paths_1d, T, save_time_only=clargs.time_only)
+        pool = multiprocessing.Pool()  # creates a pool of process, controls worksers
+        # the pool.map only accepts one iterable, so use the partial function
+        # so that we only need to deal with one variable.
+        #task(npaths)
+        A=list(pool.map(task, np.arange(npaths))) # make our results with a map call
+
+        for obj in A:
+            pickle.dump(obj, f)
+
+        pool.close()  # we are not adding any more processes
 
     # print("Writing simulated_tp_length_distribution.dat")
     # with gzip.open(clargs.stored_paths, 'rb') as f_tps, \
@@ -230,7 +246,7 @@ if __name__ == '__main__':
     print("Writing simulated_tp_time_cdf.dat")
     with gzip.open(clargs.stored_paths, 'rb') as f_tps, \
          open('simulated_tp_time_cdf.dat', 'w') as f:
-        transition_path_time_cdf(f_tps, f)
+         transition_path_time_cdf(f_tps, f)
 
     step_size = 1
     with gzip.open(clargs.stored_paths, 'rb') as f_tps:

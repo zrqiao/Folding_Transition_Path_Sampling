@@ -13,6 +13,9 @@ X_test=np.arange(-35,35,1)
 def Toy_Cos(x):
     return A/2*np.cos(2* np.pi* x/ 151)
 
+def Toy_Cos_flat(x):
+    return A/8*np.cos(2* np.pi* x/ 151)
+
 def Toy_Periodic(x):
     return (A/2*np.cos(2* np.pi* x/ 151)+2*np.cos(10*np.pi* x/151))*(A/(A+4))
 
@@ -31,11 +34,18 @@ def HighFreq3(x):
 def HighFreq4(x):
     return A / 2 * ( 4 / 5 * np.cos(10 * np.pi * x / 106.5) + 1 / 5)
 
+def HighFreq5(x):
+    return A / 2 * ( 4 / 5 * np.cos(100 * np.pi * x / 106.5) + 1 / 5)
+
+
+
 if __name__ == '__main__':
 
 
     HarmToy=Toy_Cos(X)
     Harm_l=Toy_Cos(X_l)
+    Harm_flat = Toy_Cos_flat(X)
+    Harm_flat_l = Toy_Cos_flat(X_l)
     HarmToy_test = Toy_Cos_test(X_test)
     TwoBarrier=Toy_Cos(X)
     TwoBarrier[Truc:-Truc]=HighFreq1(X[Truc:-Truc])
@@ -53,6 +63,8 @@ if __name__ == '__main__':
     FiveBarrier[Truc:-Truc] = HighFreq4(X[Truc:-Truc])
     FiveBarrier_l = Toy_Cos(X_l)
     FiveBarrier_l[Truc*10:-Truc*10] = HighFreq4(X_l[Truc*10:-Truc*10])
+    Highfreq_l = Toy_Cos(X_l)
+    Highfreq_l[Truc*10:-Truc*10] = HighFreq5(X_l[Truc*10:-Truc*10])
     Periodic=Toy_Periodic(X)
     Periodic_l = Toy_Periodic(X_l)
 
@@ -61,6 +73,12 @@ if __name__ == '__main__':
 
     with open('Harmonic/PES_l.dat', 'w') as f:
         np.savetxt(f,np.array([X_l,Harm_l]).transpose())
+
+    with open('Harmonic_flat/PES.dat', 'w') as f:
+        np.savetxt(f,np.array([X,Harm_flat]).transpose())
+
+    with open('Harmonic_flat/PES_l.dat', 'w') as f:
+        np.savetxt(f,np.array([X_l,Harm_flat_l]).transpose())
 
     with open('2Barriers/PES_l.dat', 'w') as f:
         np.savetxt(f,np.array([X_l,TwoBarrier_l]).transpose())
@@ -76,6 +94,9 @@ if __name__ == '__main__':
 
     with open('Periodic/PES_l.dat', 'w') as f:
         np.savetxt(f,np.array([X_l,Periodic_l]).transpose())
+
+    with open('Highfreq/PES_l.dat', 'w') as f:
+        np.savetxt(f,np.array([X_l,Highfreq_l]).transpose())
 
     with open('Harmonic/PES.dat', 'w') as f:
         np.savetxt(f,np.array([X,HarmToy]).transpose())
@@ -136,14 +157,21 @@ if __name__ == '__main__':
     ax.plot(X,HarmToy,ls='solid',marker='o',label='Harmonic')
     ax.plot(X, Periodic, ls='solid', marker='h',label='Periodic')
     ax.legend(loc='best',fontsize='xx-large')
-    #ax=fig.add_subplot(236)
-    #ax.set_title('Free Energy Landscape')
-    #ax.set_xlabel('discrete state',fontsize='15')
-    #ax.set_ylabel(r'$F/kT$',fontsize='15')
-    #ax.plot(X_l,Harm_l,ls='solid',marker='o',label='Harmonic')
-    #ax.plot(X_l, TwoBarrier_l, ls='solid', marker='h',label='2Barriers')
-    #ax.legend(loc='best',fontsize='xx-large')
 
     fig. savefig('FELs.eps')
+    plt.show()
+
+    fig2 = plt.figure(figsize=(8, 5))
+
+    ax=fig2.add_subplot(111)
+    ax.set_title('Free Energy Landscape')
+    ax.set_xlabel('discrete state',fontsize='15')
+    ax.set_ylabel(r'$F/kT$',fontsize='15')
+    ax.plot(X_l,Harm_l,ls='solid',label='Harmonic')
+    ax.plot(X_l,Harm_flat_l,ls='solid',label='Harmonic_flat')
+    ax.plot(X_l,Highfreq_l, ls='solid',label='HighFreq')
+    ax.legend(loc='best',fontsize='xx-large')
+    fig2. savefig('FELs_2.eps')
+
 
     plt.show()
