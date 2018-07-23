@@ -178,6 +178,27 @@ def jump_size_distribution(stream, dts, ddt=1, step_size=1):
         {dt : {i * step_size : steps[dt][i] / norm[dt] \
                for i in range(min(steps[dt]), max(steps[dt]) + 1)} for dt in dts}
 
+def Backward_jumping_probability(stream, states):
+    forward_count = np.zeros(len(states))
+    backward_count = np.zeros(len(states))
+    backward_prob=np.zeros(len(states))
+    ntps = 0
+    while True:
+        try:
+            tp = pickle.load(stream)
+            ntps += 1
+        except (IOError, EOFError):
+            break
+        position_sequence = list(t[0] for t in tp)
+        if position_sequence[0]==0:
+            for k in range(len(position_sequence)-1):
+                if position_sequence[k+1]-position_sequence[k]==1:forward_count[position_sequence[k]]+=1
+                elif position_sequence[k + 1] - position_sequence[k] == -1: backward_count[position_sequence[k]] += 1
+    print("Loaded %d transition paths" % ntps)
+    backward_prob[:-1]=backward_count[:-1]/(forward_count+backward_count)[:-1]
+
+    return backward_prob
+
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
@@ -213,35 +234,45 @@ if __name__ == '__main__':
             f.write("%g %g %g %g\n" % (states[i], q[i], m[i] / sum(m), 2. * m[i] / pi[i]))
 
     npaths = 10000
-    print("Sampling %d transition paths and writing to %s..." % (npaths, clargs.stored_paths))
-    with gzip.open(clargs.stored_paths, 'wb') as f:
-        sample_transition_paths_1d(T, npaths, f, save_time_only=clargs.time_only)
+    #print("Sampling %d transition paths and writing to %s..." % (npaths, clargs.stored_paths))
+    #with gzip.open(clargs.stored_paths, 'wb') as f:
+    #    sample_transition_paths_1d(T, npaths, f, save_time_only=clargs.time_only)
 
     # print("Writing simulated_tp_length_distribution.dat")
     # with gzip.open(clargs.stored_paths, 'rb') as f_tps, \
     #      open('simulated_tp_length_distribution.dat', 'w') as f:
     #     for L,p in transition_path_length_distribution(f_tps).items():
     #         f.write("%g %g\n" % (L, p))
-    print("Writing simulated_tp_time_distribution.dat")
-    with gzip.open(clargs.stored_paths, 'rb') as f_tps, \
-         open('simulated_tp_time_distribution.dat', 'w') as f:
-        for t,p in transition_path_time_distribution(f_tps, nbins=400).items():
-            f.write("%g %g %g\n" % (t, p[0], p[1]))
-    print("Writing simulated_tp_time_cdf.dat")
-    with gzip.open(clargs.stored_paths, 'rb') as f_tps, \
-         open('simulated_tp_time_cdf.dat', 'w') as f:
-         transition_path_time_cdf(f_tps, f)
 
+    #print("Writing simulated_tp_time_distribution.dat")
+    #with gzip.open(clargs.stored_paths, 'rb') as f_tps, \
+    #     open('simulated_tp_time_distribution.dat', 'w') as f:
+    #    for t,p in transition_path_time_distribution(f_tps, nbins=400).items():
+    #        f.write("%g %g %g\n" % (t, p[0], p[1]))
+
+    #print("Writing simulated_tp_time_cdf.dat")
+    #with gzip.open(clargs.stored_paths, 'rb') as f_tps, \
+    #     open('simulated_tp_time_cdf.dat', 'w') as f:
+    #     transition_path_time_cdf(f_tps, f)
+    print("Writing backward_jumping_probability.dat")
     step_size = 1
     with gzip.open(clargs.stored_paths, 'rb') as f_tps:
-        msd, steps = jump_size_distribution(f_tps, [2.**p for p in range(8)], step_size=step_size)
-    print("Writing simulated_tp_msd.dat")
-    with open('simulated_tp_msd.dat', 'w') as f:
-        for dt in msd:
-            f.write("%g %g\n" % (dt, msd[dt]))
-    print("Writing simulated_tp_step_size_distribution.dat")
-    with open('simulated_tp_step_size_distribution.dat', 'w') as f:
-        for dt in steps:
-            for i in range(min(steps[dt]), max(steps[dt]) + 1):
-                f.write("%g %g %g\n" % (math.log(dt) / math.log(2), i * step_size, steps[dt][i]))
-            f.write("\n")
+        backward_prob = Backward_jumping_probability(f_tps,states)
+        with open('backward_jumping_probability.dat', 'w') as f:
+            for i in range(len(states)):
+                f.write("%g %g \n" % (states[i], backward_prob[i] ))
+
+
+    step_size = 1
+    #with gzip.open(clargs.stored_paths, 'rb') as f_tps:
+    #    msd, steps = jump_size_distribution(f_tps, [2.**p for p in range(8)], step_size=step_size)
+    #print("Writing simulated_tp_msd.dat")
+    #with open('simulated_tp_msd.dat', 'w') as f:
+    #    for dt in msd:
+    #        f.write("%g %g\n" % (dt, msd[dt]))
+    #print("Writing simulated_tp_step_size_distribution.dat")
+    #with open('simulated_tp_step_size_distribution.dat', 'w') as f:
+    #    for dt in steps:
+    #        for i in range(min(steps[dt]), max(steps[dt]) + 1):
+    #            f.write("%g %g %g\n" % (math.log(dt) / math.log(2), i * step_size, steps[dt][i]))
+    #        f.write("\n")
